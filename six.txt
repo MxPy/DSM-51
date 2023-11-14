@@ -1,0 +1,127 @@
+    LJMP START
+    ORG 100H
+START:
+    LCALL LCD_CLR 
+    LCALL WAIT_KEY
+    MOV R0, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    LCALL WAIT_KEY
+    
+    
+    CJNE A,#10, SUMI
+    MOV A,#'+'
+    LCALL WRITE_DATA
+    LCALL WAIT_KEY
+    MOV R1, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#'='
+    LCALL WRITE_DATA
+    MOV A, R1
+    CLR C
+    ADD A, R0
+    LJMP END
+SUMI:
+    
+    CJNE A,#12, SUBI
+    MOV A,#'-'
+    LCALL WRITE_DATA
+    LCALL WAIT_KEY
+    MOV R1, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#'='
+    LCALL WRITE_DATA
+    MOV A, R0
+    CLR C
+    SUBB A, R1
+    JNC END
+    CPL A
+    INC A
+    MOV R0, A
+    MOV A,#'-'
+    LCALL WRITE_DATA
+    MOV A, R0
+    LCALL BCD
+    SJMP MULEND
+SUBI:
+
+    CJNE A,#11, MULI
+    MOV A,#'*'
+    LCALL WRITE_DATA
+    LCALL WAIT_KEY
+    MOV R1, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#'='
+    LCALL WRITE_DATA
+    MOV A, R1
+    MOV B, R0
+    CLR C
+    MUL AB
+    MOV R0, A
+    SJMP MULEND
+
+END:
+    MOV R0, A
+    LCALL BCD
+MULEND:
+    LCALL WRITE_HEX
+    MOV A,#10
+    LCALL DELAY_100MS
+    LCALL LCD_CLR 
+    LJMP START
+    NOP
+
+MULI:
+
+    CLR C
+    CJNE A,#13, END
+    MOV A,#'/'
+    LCALL WRITE_DATA
+    LCALL WAIT_KEY
+    MOV R1, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A, R1
+    CJNE A,#0, DIVI2
+    LCALL LCD_CLR
+    MOV A,#'X'
+    LCALL WRITE_DATA
+    MOV A,#10
+    LCALL DELAY_100MS
+    LJMP START
+DIVI2:
+    MOV A,#'='
+    LCALL WRITE_DATA
+    MOV A, R0
+    MOV B, R1
+    CLR C
+    DIV AB
+    MOV R3, B
+    MOV R0, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#'R'
+    LCALL WRITE_DATA
+    MOV A, R3
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#10
+    LCALL DELAY_100MS
+    LCALL LCD_CLR 
+    LJMP START
+    NOP
+BCD:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET
+CHUJ_DO_EMULACJI:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET

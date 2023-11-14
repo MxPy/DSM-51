@@ -1,0 +1,126 @@
+     1  0000: 02 01 00      LJMP START
+     2  0100:               ORG 100H
+     3  0100:           START:
+     4  0100: 12 81 0C      LCALL LCD_CLR 
+     5  0103: 12 81 1C      LCALL WAIT_KEY
+     6  0106: F8            MOV R0, A
+     7  0107: 12 01 DB      LCALL BCD
+     8  010A: 12 81 04      LCALL WRITE_HEX
+     9  010D: 12 81 1C      LCALL WAIT_KEY
+    10                      
+    11                      
+    12  0110: B4 0A 1A      CJNE A,#10, SUMI
+    13  0113: 74 2B         MOV A,#'+'
+    14  0115: 12 81 02      LCALL WRITE_DATA
+    15  0118: 12 81 1C      LCALL WAIT_KEY
+    16  011B: F9            MOV R1, A
+    17  011C: 12 01 DB      LCALL BCD
+    18  011F: 12 81 04      LCALL WRITE_HEX
+    19  0122: 74 3D         MOV A,#'='
+    20  0124: 12 81 02      LCALL WRITE_DATA
+    21  0127: E9            MOV A, R1
+    22  0128: C3            CLR C
+    23  0129: 28            ADD A, R0
+    24  012A: 02 01 76      LJMP END
+    25  012D:           SUMI:
+    26                      
+    27  012D: B4 0C 27      CJNE A,#12, SUBI
+    28  0130: 74 2D         MOV A,#'-'
+    29  0132: 12 81 02      LCALL WRITE_DATA
+    30  0135: 12 81 1C      LCALL WAIT_KEY
+    31  0138: F9            MOV R1, A
+    32  0139: 12 01 DB      LCALL BCD
+    33  013C: 12 81 04      LCALL WRITE_HEX
+    34  013F: 74 3D         MOV A,#'='
+    35  0141: 12 81 02      LCALL WRITE_DATA
+    36  0144: E8            MOV A, R0
+    37  0145: C3            CLR C
+    38  0146: 99            SUBB A, R1
+    39  0147: 50 2D         JNC END
+    40  0149: F4            CPL A
+    41  014A: 04            INC A
+    42  014B: F8            MOV R0, A
+    43  014C: 74 2D         MOV A,#'-'
+    44  014E: 12 81 02      LCALL WRITE_DATA
+    45  0151: E8            MOV A, R0
+    46  0152: 12 01 DB      LCALL BCD
+    47  0155: 80 23         SJMP MULEND
+    48  0157:           SUBI:
+    49                  
+    50  0157: B4 0B 2F      CJNE A,#11, MULI
+    51  015A: 74 2A         MOV A,#'*'
+    52  015C: 12 81 02      LCALL WRITE_DATA
+    53  015F: 12 81 1C      LCALL WAIT_KEY
+    54  0162: F9            MOV R1, A
+    55  0163: 12 01 DB      LCALL BCD
+    56  0166: 12 81 04      LCALL WRITE_HEX
+    57  0169: 74 3D         MOV A,#'='
+    58  016B: 12 81 02      LCALL WRITE_DATA
+    59  016E: E9            MOV A, R1
+    60  016F: 88 F0         MOV B, R0
+    61  0171: C3            CLR C
+    62  0172: A4            MUL AB
+    63  0173: F8            MOV R0, A
+    64  0174: 80 04         SJMP MULEND
+    65                  
+    66  0176:           END:
+    67  0176: F8            MOV R0, A
+    68  0177: 12 01 DB      LCALL BCD
+    69  017A:           MULEND:
+    70  017A: 12 81 04      LCALL WRITE_HEX
+    71  017D: 74 0A         MOV A,#10
+    72  017F: 12 81 12      LCALL DELAY_100MS
+    73  0182: 12 81 0C      LCALL LCD_CLR 
+    74  0185: 02 01 00      LJMP START
+    75  0188: 00            NOP
+    76                  
+    77  0189:           MULI:
+    78                  
+    79  0189: C3            CLR C
+    80  018A: B4 0D E9      CJNE A,#13, END
+    81  018D: 74 2F         MOV A,#'/'
+    82  018F: 12 81 02      LCALL WRITE_DATA
+    83  0192: 12 81 1C      LCALL WAIT_KEY
+    84  0195: F9            MOV R1, A
+    85  0196: 12 01 DB      LCALL BCD
+    86  0199: 12 81 04      LCALL WRITE_HEX
+    87  019C: E9            MOV A, R1
+    88  019D: B4 00 10      CJNE A,#0, DIVI2
+    89  01A0: 12 81 0C      LCALL LCD_CLR
+    90  01A3: 74 58         MOV A,#'X'
+    91  01A5: 12 81 02      LCALL WRITE_DATA
+    92  01A8: 74 0A         MOV A,#10
+    93  01AA: 12 81 12      LCALL DELAY_100MS
+    94  01AD: 02 01 00      LJMP START
+    95  01B0:           DIVI2:
+    96  01B0: 74 3D         MOV A,#'='
+    97  01B2: 12 81 02      LCALL WRITE_DATA
+    98  01B5: E8            MOV A, R0
+    99  01B6: 89 F0         MOV B, R1
+   100  01B8: C3            CLR C
+   101  01B9: 84            DIV AB
+   102  01BA: AB F0         MOV R3, B
+   103  01BC: F8            MOV R0, A
+   104  01BD: 12 01 DB      LCALL BCD
+   105  01C0: 12 81 04      LCALL WRITE_HEX
+   106  01C3: 74 52         MOV A,#'R'
+   107  01C5: 12 81 02      LCALL WRITE_DATA
+   108  01C8: EB            MOV A, R3
+   109  01C9: 12 01 DB      LCALL BCD
+   110  01CC: 12 81 04      LCALL WRITE_HEX
+   111  01CF: 74 0A         MOV A,#10
+   112  01D1: 12 81 12      LCALL DELAY_100MS
+   113  01D4: 12 81 0C      LCALL LCD_CLR 
+   114  01D7: 02 01 00      LJMP START
+   115  01DA: 00            NOP
+   116  01DB:           BCD:
+   117  01DB: 75 F0 0A      MOV B,#10
+   118  01DE: 84            DIV AB
+   119  01DF: C4            SWAP A
+   120  01E0: 25 F0         ADD A,B
+   121  01E2: 22            RET
+   122  01E3:           CHUJ_DO_EMULACJI:
+   123  01E3: 75 F0 0A      MOV B,#10
+   124  01E6: 84            DIV AB
+   125  01E7: C4            SWAP A
+   126  01E8: 25 F0         ADD A,B

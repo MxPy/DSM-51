@@ -1,0 +1,42 @@
+    LJMP START
+    ORG 100H
+START:
+    LCALL LCD_CLR 
+    CLR C
+    LCALL WAIT_KEY
+    MOV R0, A
+    LCALL BCD
+    LCALL WRITE_HEX
+SUM:
+    MOV A,#'+'
+    LCALL WRITE_DATA
+    LCALL WAIT_KEY
+    MOV R1, A
+    LCALL WRITE_HEX
+    MOV A,#'='
+    LCALL WRITE_DATA
+    MOV A, R1
+    ADD A, R0
+    MOV R0, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#10
+    LCALL DELAY_100MS
+    LCALL LCD_CLR 
+    MOV A, R0
+    LCALL BCD
+    LCALL WRITE_HEX
+    SJMP SUM
+    NOP
+BCD:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET
+CHUJ_DO_EMULACJI:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET
