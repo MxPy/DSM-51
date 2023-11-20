@@ -24,6 +24,33 @@ TL0_SET EQU 0
     LJMP START
     ORG 100H
 START:
+    LCALL WPROWADZ_CZAS
+    MOV A,#10
+    LCALL DELAY_100MS
+    LCALL ZERUJ_LCD
+LOOP:
+    SJMP LOOP
+    NOP
+
+    ;MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
+    ;MOV TH0,#TH0_SET ;Timer 0 na 50ms
+    ;MOV TL0,#TL0_SET
+    ;SETB TR0 ;start Timera
+
+ZERUJ_LCD:
+    LCALL LCD_CLR
+    MOV A,#0
+    LCALL WRITE_HEX
+    MOV A,#':'
+    LCALL WRITE_DATA
+    MOV A,#0
+    LCALL WRITE_HEX
+    MOV A,#':'
+    LCALL WRITE_DATA
+    MOV A,#0
+    LCALL WRITE_HEX
+    RET
+WPROWADZ_CZAS:
     LCALL LCD_CLR 
     LCALL WPROWADZ
     MOV R0, A
@@ -41,14 +68,7 @@ START:
     MOV R2, A
     LCALL BCD
     LCALL WRITE_HEX
-    NOP
-
-    ;MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
-    ;MOV TH0,#TH0_SET ;Timer 0 na 50ms
-    ;MOV TL0,#TL0_SET
-    ;SETB TR0 ;start Timera
-
-
+    RET
 WPROWADZ:
     LCALL WAIT_KEY ; Wczytaj liczbę dziesiątek
     MOV B,#10 ; pomnóż
