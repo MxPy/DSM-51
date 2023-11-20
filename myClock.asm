@@ -3,7 +3,7 @@ LED EQU P1.7
 
 ;TIMER 0
 T0_G EQU 0 ;GATE
-T0_C EQU 0 ;COUNTER/-TIMER
+T0_C EQU 1 ;COUNTER/-TIMER
 T0_M EQU 1 ;MODE (0..3)
 TIM0 EQU T0_M+T0_C*4+T0_G*8
 
@@ -19,6 +19,9 @@ TMOD_SET EQU TIM0+TIM1*16
 ; = 46 080 cykli = 180 * 256
 TH0_SET EQU 256-180
 TL0_SET EQU 0
+
+TH1_SET EQU 0
+TL1_SET EQU 0
 ;***********************************************
 
     LJMP START
@@ -27,17 +30,28 @@ START:
     LCALL WPROWADZ_CZAS
     MOV A,#10
     LCALL DELAY_100MS
-    LCALL ZERUJ_LCD
-LOOP:
+    LCALL USTAW_TIMER
+LOOP:                ;Pętla mrugania diody TEST
+    LCALL USTAW_LCD
+    MOV R7,#20       ;odczekaj czas 20*50ms=1s
+TIME_N50:
+    JNB TF0,$        ;czekaj, aż Timer 0
+                     ;odliczy 50ms
+    MOV TH0,#TH0_SET ;TH0 na 50ms
+    CLR TF0          ;zerowanie flagi timera 0
+    DJNZ R7,TIME_N50 ;odczekanie N*50ms
+    SETB TR1
     SJMP LOOP
     NOP
-
-    ;MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
-    ;MOV TH0,#TH0_SET ;Timer 0 na 50ms
-    ;MOV TL0,#TL0_SET
-    ;SETB TR0 ;start Timera
-
-ZERUJ_LCD:
+USTAW_TIMER:
+    MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
+    MOV TH0,#TH0_SET ;Timer 0 na 50ms
+    MOV TL0,#TL0_SET
+    SETB TR0 ;start Timera
+    MOV TH1,#TH1_SET ;Timer 0 na 50ms
+    MOV TL1,#TL1_SET
+    RET
+USTAW_LCD:
     LCALL LCD_CLR
     MOV A,#0
     LCALL WRITE_HEX
@@ -47,7 +61,7 @@ ZERUJ_LCD:
     LCALL WRITE_HEX
     MOV A,#':'
     LCALL WRITE_DATA
-    MOV A,#0
+    MOV A,TL1
     LCALL WRITE_HEX
     RET
 WPROWADZ_CZAS:
