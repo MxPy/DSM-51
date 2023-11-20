@@ -1,0 +1,55 @@
+     1        0097      ED EQU P1.7
+     2                  ;********* Ustawienie TIMERów *********
+     3                  ;TIMER 0
+     4        0000      T0_G EQU 0 ;GATE
+     5        0000      T0_C EQU 0 ;COUNTER/-TIMER
+     6        0001      T0_M EQU 1 ;MODE (0..3)
+     7        0001      TIM0 EQU T0_M+T0_C*4+T0_G*8
+     8                  ;TIMER 1
+     9        0000      T1_G EQU 0 ;GATE
+    10        0000      T1_C EQU 0 ;COUNTER/-TIMER
+    11        0000      T1_M EQU 0 ;MODE (0..3)
+    12        0000      TIM1 EQU T1_M+T1_C*4+T1_G*8
+    13        0001      TMOD_SET EQU TIM0+TIM1*16
+    14                  ;50[ms] = 50 000[ŠS]*(11.0592[MHz]/12) =
+    15                  ; = 46 080 cykli = 180 * 256
+    16        004C      TH0_SET EQU 256-180
+    17        0000      TL0_SET EQU 0
+    18                  ;*************************************   
+    19                  
+    20  0000: 02 01 00      LJMP START
+    21  0100:               ORG 100H
+    22  0100:           START:
+    23  0100: 75 89 01      MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
+    24  0103: 75 8C 4C      MOV TH0,#TH0_SET ;Timer 0 na 50ms
+    25  0106: 75 8A 00      MOV TL0,#TL0_SET
+    26  0109: D2 8C         SETB TR0 ;start Timera
+    27  010B:           LOOP: ;Pętla mrugania diody TEST
+    28  010B: B2 97         CPL P1.7
+    29  010D: 7F 14         MOV R7,#20 ;odczekaj czas 20*50ms=1s
+    30  010F:           TIME_N50:
+    31  010F: 30 8D FD      JNB TF0,$ ;czekaj, aż Timer 0
+    32                      ;odliczy 50ms
+    33  0112: 75 8C 4C      MOV TH0,#TH0_SET ;TH0 na 50ms
+    34  0115: C2 8D         CLR TF0 ;zerowanie flagi timera 0
+    35  0117: DF F6         DJNZ R7,TIME_N50 ;odczekanie N*50ms
+    36  0119: 80 F0         SJMP LOOP
+    37  011B:           WPROWADZ:
+    38  011B: 12 81 1C      LCALL WAIT_KEY
+    39  011E: 75 F0 0A      MOV B,#10
+    40  0121: A4            MUL AB
+    41  0122: F9            MOV R1,A
+    42  0123: 12 81 1C      LCALL WAIT_KEY
+    43  0126: 29            ADD A,R1
+    44  0127: 22            RET ; wyjdź z podprogramu. Wynik w A
+    45  0128:           BCD:
+    46  0128: 75 F0 0A      MOV B,#10
+    47  012B: 84            DIV AB
+    48  012C: C4            SWAP A
+    49  012D: 25 F0         ADD A,B
+    50  012F: 22            RET
+    51  0130:           CHUJ_DO_EMULACJI:
+    52  0130: 75 F0 0A      MOV B,#10
+    53  0133: 84            DIV AB
+    54  0134: C4            SWAP A
+    55  0135: 25 F0         ADD A,B

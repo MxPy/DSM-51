@@ -1,0 +1,26 @@
+LJMP START
+    ORG 100H
+START:
+    LCALL LCD_CLR 
+    
+ENETERNUM:
+    LCALL WAIT_KEY
+    MOV R0, A
+    LCALL BCD
+    LCALL WRITE_HEX
+    LCALL WAIT_KEY
+    MOV B, A
+    
+    
+BCD:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET
+CHUJ_DO_EMULACJI:
+    MOV B,#10
+    DIV AB
+    SWAP A
+    ADD A,B
+    RET
