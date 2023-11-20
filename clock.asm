@@ -1,4 +1,4 @@
-ED EQU P1.7
+LED EQU P1.7
 ;********* Ustawienie TIMERów *********
 ;TIMER 0
 T0_G EQU 0 ;GATE
@@ -24,7 +24,7 @@ START:
     MOV TL0,#TL0_SET
     SETB TR0 ;start Timera
 LOOP: ;Pętla mrugania diody TEST
-    CPL P1.7
+    CPL LED
     MOV R7,#20 ;odczekaj czas 20*50ms=1s
 TIME_N50:
     JNB TF0,$ ;czekaj, aż Timer 0
