@@ -3,7 +3,7 @@ LED EQU P1.7
 
 ;TIMER 0
 T0_G EQU 0 ;GATE
-T0_C EQU 1 ;COUNTER/-TIMER
+T0_C EQU 0 ;COUNTER/-TIMER
 T0_M EQU 1 ;MODE (0..3)
 TIM0 EQU T0_M+T0_C*4+T0_G*8
 
@@ -28,11 +28,16 @@ TL1_SET EQU 0
     ORG 100H
 START:
     LCALL WPROWADZ_CZAS
-    MOV A,#10
-    LCALL DELAY_100MS
-    LCALL USTAW_TIMER
+
+    MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
+    MOV TH0,#TH0_SET ;Timer 0 na 50ms
+    MOV TL0,#TL0_SET
+    SETB TR0 ;start Timera
 LOOP:                ;Pętla mrugania diody TEST
     LCALL USTAW_LCD
+    LCALL SPRWADZ_SEC
+    LCALL SPRWADZ_MIN
+    CPL LED
     MOV R7,#20       ;odczekaj czas 20*50ms=1s
 TIME_N50:
     JNB TF0,$        ;czekaj, aż Timer 0
@@ -40,46 +45,83 @@ TIME_N50:
     MOV TH0,#TH0_SET ;TH0 na 50ms
     CLR TF0          ;zerowanie flagi timera 0
     DJNZ R7,TIME_N50 ;odczekanie N*50ms
-    SETB TR1
+    INC R2
     SJMP LOOP
     NOP
-USTAW_TIMER:
-    MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
-    MOV TH0,#TH0_SET ;Timer 0 na 50ms
-    MOV TL0,#TL0_SET
-    SETB TR0 ;start Timera
-    MOV TH1,#TH1_SET ;Timer 0 na 50ms
-    MOV TL1,#TL1_SET
+SPRWADZ_SEC:
+    MOV A, R2
+    CLR C
+    SUBB A, #59
+    JC WYJDZ
+    MOV R2, #0
+    INC R1
+WYJDZ:
     RET
+SPRWADZ_MIN:
+    MOV A, R1
+    CLR C
+    SUBB A, #60
+    JC WYJDZ2
+    MOV R1, #0
+    INC R0
+WYJDZ2:
+    RET
+SPRWADZ_GODZ:
+    MOV A, R1
+    CLR C
+    SUBB A, #60
+    JC WYJDZ2
+    MOV R1, #0
+    INC R0
+WYJDZ2:
+    RET
+
 USTAW_LCD:
     LCALL LCD_CLR
-    MOV A,#0
+    MOV A,R0
+    LCALL BCD
     LCALL WRITE_HEX
     MOV A,#':'
     LCALL WRITE_DATA
-    MOV A,#0
+    MOV A,R1
+    LCALL BCD
     LCALL WRITE_HEX
     MOV A,#':'
     LCALL WRITE_DATA
-    MOV A,TL1
+    MOV A,R2
+    LCALL BCD
     LCALL WRITE_HEX
     RET
 WPROWADZ_CZAS:
     LCALL LCD_CLR 
     LCALL WPROWADZ
     MOV R0, A
+    CLR C
+    SUBB A, #25
+    JNC WPROWADZ_CZAS
+    MOV A, R0
     LCALL BCD
     LCALL WRITE_HEX
     MOV A,#':'
     LCALL WRITE_DATA
+WPROWADZ_MINUTY:
     LCALL WPROWADZ
     MOV R1, A
+    CLR C
+    SUBB A, #61
+    JNC WPROWADZ_MINUTY
+    MOV A, R1
     LCALL BCD
     LCALL WRITE_HEX
     MOV A,#':'
     LCALL WRITE_DATA
+WPROWADZ_SEC:
     LCALL WPROWADZ
     MOV R2, A
+    CLR C
+    SUBB A, #61
+    JNC WPROWADZ_MINUTY
+    MOV A, R2
     LCALL BCD
     LCALL WRITE_HEX
     RET
@@ -87,9 +129,9 @@ WPROWADZ:
     LCALL WAIT_KEY ; Wczytaj liczbę dziesiątek
     MOV B,#10 ; pomnóż
     MUL AB ; przez 10
-    MOV R1,A ; zapisz liczbę w R1
+    MOV R5,A ; zapisz liczbę w R1
     LCALL WAIT_KEY ;wczytaj liczbę jedności
-    ADD A,R1 ; dodaj liczbę jedności do R1
+    ADD A,R5 ; dodaj liczbę jedności do R1
     RET ; wyjdź z podprogramu. Wynik w A.
 BCD:
     MOV B,#10
