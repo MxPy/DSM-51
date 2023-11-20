@@ -37,6 +37,7 @@ LOOP:                ;Pętla mrugania diody TEST
     LCALL USTAW_LCD
     LCALL SPRWADZ_SEC
     LCALL SPRWADZ_MIN
+    LCALL SPRWADZ_GODZ
     CPL LED
     MOV R7,#20       ;odczekaj czas 20*50ms=1s
 TIME_N50:
@@ -67,13 +68,12 @@ SPRWADZ_MIN:
 WYJDZ2:
     RET
 SPRWADZ_GODZ:
-    MOV A, R1
+    MOV A, R0
     CLR C
-    SUBB A, #60
-    JC WYJDZ2
-    MOV R1, #0
-    INC R0
-WYJDZ2:
+    SUBB A, #24
+    JC WYJDZ3
+    MOV R0, #0
+WYJDZ3:
     RET
 
 USTAW_LCD:
