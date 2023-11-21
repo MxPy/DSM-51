@@ -10,7 +10,7 @@ TIM0 EQU T0_M+T0_C*4+T0_G*8
 ;TIMER 1
 T1_G EQU 0 ;GATE
 T1_C EQU 0 ;COUNTER/-TIMER
-T1_M EQU 0 ;MODE (0..3)
+T1_M EQU 1 ;MODE (0..3)
 TIM1 EQU T1_M+T1_C*4+T1_G*8
 
 TMOD_SET EQU TIM0+TIM1*16
@@ -28,7 +28,7 @@ TL1_SET EQU 0
     ORG 100H
 START:
     LCALL WPROWADZ_CZAS
-
+    LCALL WPROWADZ_CZAS2
     MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
     MOV TH0,#TH0_SET ;Timer 0 na 50ms
     MOV TL0,#TL0_SET
@@ -47,7 +47,22 @@ TIME_N50:
     CLR TF0          ;zerowanie flagi timera 0
     DJNZ R7,TIME_N50 ;odczekanie N*50ms
     INC R2
-    SJMP LOOP
+
+    MOV A, R0
+    CLR C
+    SUBB A, R3
+    CJNE A,#0, LOOP
+    MOV A, R1
+    CLR C
+    SUBB A, R4
+    CJNE A,#0, LOOP
+    MOV A, R5
+    CLR C
+    SUBB A, R5
+    CJNE A,#0, LOOP
+    CPL LED
+LOOP2:
+    SJMP LOOP2
     NOP
 SPRWADZ_SEC:
     MOV A, R2
@@ -58,6 +73,7 @@ SPRWADZ_SEC:
     INC R1
 WYJDZ:
     RET
+
 SPRWADZ_MIN:
     MOV A, R1
     CLR C
@@ -67,6 +83,7 @@ SPRWADZ_MIN:
     INC R0
 WYJDZ2:
     RET
+
 SPRWADZ_GODZ:
     MOV A, R0
     CLR C
@@ -120,11 +137,46 @@ WPROWADZ_SEC:
     MOV R2, A
     CLR C
     SUBB A, #61
-    JNC WPROWADZ_MINUTY
+    JNC WPROWADZ_SEC
     MOV A, R2
     LCALL BCD
     LCALL WRITE_HEX
     RET
+
+WPROWADZ_CZAS2:
+    LCALL LCD_CLR 
+    LCALL WPROWADZ
+    MOV R3, A
+    CLR C
+    SUBB A, #25
+    JNC WPROWADZ_CZAS2
+    MOV A, R3
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#':'
+    LCALL WRITE_DATA
+WPROWADZ_MINUTY2:
+    LCALL WPROWADZ
+    MOV R4, A
+    CLR C
+    SUBB A, #61
+    JNC WPROWADZ_MINUTY2
+    MOV A, R4
+    LCALL BCD
+    LCALL WRITE_HEX
+    MOV A,#':'
+    LCALL WRITE_DATA
+WPROWADZ_SEC2:
+    LCALL WPROWADZ
+    MOV R5, A
+    CLR C
+    SUBB A, #61
+    JNC WPROWADZ_SEC2
+    MOV A, R5
+    LCALL BCD
+    LCALL WRITE_HEX
+    RET
+
 WPROWADZ:
     LCALL WAIT_KEY ; Wczytaj liczbę dziesiątek
     MOV B,#10 ; pomnóż

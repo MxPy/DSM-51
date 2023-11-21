@@ -10,10 +10,10 @@
     10                  ;TIMER 1
     11        0000      T1_G EQU 0 ;GATE
     12        0000      T1_C EQU 0 ;COUNTER/-TIMER
-    13        0000      T1_M EQU 0 ;MODE (0..3)
-    14        0000      TIM1 EQU T1_M+T1_C*4+T1_G*8
+    13        0001      T1_M EQU 1 ;MODE (0..3)
+    14        0001      TIM1 EQU T1_M+T1_C*4+T1_G*8
     15                  
-    16        0001      TMOD_SET EQU TIM0+TIM1*16
+    16        0011      TMOD_SET EQU TIM0+TIM1*16
     17                  
     18                  ;50[ms] = 50 000[ŠS]*(11.0592[MHz]/12) =
     19                  ; = 46 080 cykli = 180 * 256
@@ -27,122 +27,174 @@
     27  0000: 02 01 00      LJMP START
     28  0100:               ORG 100H
     29  0100:           START:
-    30  0100: 12 01 6C      LCALL WPROWADZ_CZAS
-    31                  
-    32  0103: 75 89 01      MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
-    33  0106: 75 8C 4C      MOV TH0,#TH0_SET ;Timer 0 na 50ms
-    34  0109: 75 8A 00      MOV TL0,#TL0_SET
-    35  010C: D2 8C         SETB TR0 ;start Timera
-    36  010E:           LOOP:                ;Pętla mrugania diody TEST
-    37  010E: 12 01 49      LCALL USTAW_LCD
-    38  0111: 12 01 2C      LCALL SPRWADZ_SEC
-    39  0114: 12 01 36      LCALL SPRWADZ_MIN
-    40  0117: 12 01 40      LCALL SPRWADZ_GODZ
-    41  011A: B2 97         CPL LED
-    42  011C: 7F 14         MOV R7,#20       ;odczekaj czas 20*50ms=1s
-    43  011E:           TIME_N50:
-    44  011E: 30 8D FD      JNB TF0,$        ;czekaj, aż Timer 0
+    30  0100: 12 01 83      LCALL WPROWADZ_CZAS
+    31  0103: 12 01 C1      LCALL WPROWADZ_CZAS2
+    32  0106: 75 89 11      MOV TMOD,#TMOD_SET ;Timer 0 liczy czas
+    33  0109: 75 8C 4C      MOV TH0,#TH0_SET ;Timer 0 na 50ms
+    34  010C: 75 8A 00      MOV TL0,#TL0_SET
+    35  010F: D2 8C         SETB TR0 ;start Timera
+    36  0111:           LOOP:                ;Pętla mrugania diody TEST
+    37  0111: 12 01 60      LCALL USTAW_LCD
+    38  0114: 12 01 43      LCALL SPRWADZ_SEC
+    39  0117: 12 01 4D      LCALL SPRWADZ_MIN
+    40  011A: 12 01 57      LCALL SPRWADZ_GODZ
+    41  011D: B2 97         CPL LED
+    42  011F: 7F 14         MOV R7,#20       ;odczekaj czas 20*50ms=1s
+    43  0121:           TIME_N50:
+    44  0121: 30 8D FD      JNB TF0,$        ;czekaj, aż Timer 0
     45                                       ;odliczy 50ms
-    46  0121: 75 8C 4C      MOV TH0,#TH0_SET ;TH0 na 50ms
-    47  0124: C2 8D         CLR TF0          ;zerowanie flagi timera 0
-    48  0126: DF F6         DJNZ R7,TIME_N50 ;odczekanie N*50ms
-    49  0128: 0A            INC R2
-    50  0129: 80 E3         SJMP LOOP
-    51  012B: 00            NOP
-    52  012C:           SPRWADZ_SEC:
-    53  012C: EA            MOV A, R2
-    54  012D: C3            CLR C
-    55  012E: 94 3B         SUBB A, #59
-    56  0130: 40 03         JC WYJDZ
-    57  0132: 7A 00         MOV R2, #0
-    58  0134: 09            INC R1
-    59  0135:           WYJDZ:
-    60  0135: 22            RET
-    61  0136:           SPRWADZ_MIN:
-    62  0136: E9            MOV A, R1
-    63  0137: C3            CLR C
-    64  0138: 94 3C         SUBB A, #60
-    65  013A: 40 03         JC WYJDZ2
-    66  013C: 79 00         MOV R1, #0
-    67  013E: 08            INC R0
-    68  013F:           WYJDZ2:
-    69  013F: 22            RET
-    70  0140:           SPRWADZ_GODZ:
-    71  0140: E8            MOV A, R0
-    72  0141: C3            CLR C
-    73  0142: 94 18         SUBB A, #24
-    74  0144: 40 02         JC WYJDZ3
-    75  0146: 78 00         MOV R0, #0
-    76  0148:           WYJDZ3:
-    77  0148: 22            RET
-    78                  
-    79  0149:           USTAW_LCD:
-    80  0149: 12 81 0C      LCALL LCD_CLR
-    81  014C: E8            MOV A,R0
-    82  014D: 12 01 B7      LCALL BCD
-    83  0150: 12 81 04      LCALL WRITE_HEX
-    84  0153: 74 3A         MOV A,#':'
-    85  0155: 12 81 02      LCALL WRITE_DATA
-    86  0158: E9            MOV A,R1
-    87  0159: 12 01 B7      LCALL BCD
-    88  015C: 12 81 04      LCALL WRITE_HEX
-    89  015F: 74 3A         MOV A,#':'
-    90  0161: 12 81 02      LCALL WRITE_DATA
-    91  0164: EA            MOV A,R2
-    92  0165: 12 01 B7      LCALL BCD
-    93  0168: 12 81 04      LCALL WRITE_HEX
-    94  016B: 22            RET
-    95  016C:           WPROWADZ_CZAS:
-    96  016C: 12 81 0C      LCALL LCD_CLR 
-    97  016F: 12 01 AA      LCALL WPROWADZ
-    98  0172: F8            MOV R0, A
-    99  0173: C3            CLR C
-   100  0174: 94 19         SUBB A, #25
-   101  0176: 50 F4         JNC WPROWADZ_CZAS
-   102  0178: E8            MOV A, R0
-   103  0179: 12 01 B7      LCALL BCD
-   104  017C: 12 81 04      LCALL WRITE_HEX
-   105  017F: 74 3A         MOV A,#':'
-   106  0181: 12 81 02      LCALL WRITE_DATA
-   107  0184:           WPROWADZ_MINUTY:
-   108  0184: 12 01 AA      LCALL WPROWADZ
-   109  0187: F9            MOV R1, A
-   110  0188: C3            CLR C
-   111  0189: 94 3D         SUBB A, #61
-   112  018B: 50 F7         JNC WPROWADZ_MINUTY
-   113  018D: E9            MOV A, R1
-   114  018E: 12 01 B7      LCALL BCD
-   115  0191: 12 81 04      LCALL WRITE_HEX
-   116  0194: 74 3A         MOV A,#':'
-   117  0196: 12 81 02      LCALL WRITE_DATA
-   118  0199:           WPROWADZ_SEC:
-   119  0199: 12 01 AA      LCALL WPROWADZ
-   120  019C: FA            MOV R2, A
-   121  019D: C3            CLR C
-   122  019E: 94 3D         SUBB A, #61
-   123  01A0: 50 E2         JNC WPROWADZ_MINUTY
-   124  01A2: EA            MOV A, R2
-   125  01A3: 12 01 B7      LCALL BCD
-   126  01A6: 12 81 04      LCALL WRITE_HEX
-   127  01A9: 22            RET
-   128  01AA:           WPROWADZ:
-   129  01AA: 12 81 1C      LCALL WAIT_KEY ; Wczytaj liczbę dziesiątek
-   130  01AD: 75 F0 0A      MOV B,#10 ; pomnóż
-   131  01B0: A4            MUL AB ; przez 10
-   132  01B1: FD            MOV R5,A ; zapisz liczbę w R1
-   133  01B2: 12 81 1C      LCALL WAIT_KEY ;wczytaj liczbę jedności
-   134  01B5: 2D            ADD A,R5 ; dodaj liczbę jedności do R1
-   135  01B6: 22            RET ; wyjdź z podprogramu. Wynik w A.
-   136  01B7:           BCD:
-   137  01B7: 75 F0 0A      MOV B,#10
-   138  01BA: 84            DIV AB
-   139  01BB: C4            SWAP A
-   140  01BC: 25 F0         ADD A,B
-   141  01BE: 22            RET
-   142  01BF:           CHUJ_DO_EMULACJI:
-   143  01BF: 75 F0 0A      MOV B,#10
-   144  01C2: 84            DIV AB
-   145  01C3: C4            SWAP A
-   146  01C4: 25 F0         ADD A,B
-   147  01C6: 22            RET
-   148                  
+    46  0124: 75 8C 4C      MOV TH0,#TH0_SET ;TH0 na 50ms
+    47  0127: C2 8D         CLR TF0          ;zerowanie flagi timera 0
+    48  0129: DF F6         DJNZ R7,TIME_N50 ;odczekanie N*50ms
+    49  012B: 0A            INC R2
+    50                  
+    51  012C: E8            MOV A, R0
+    52  012D: C3            CLR C
+    53  012E: 9B            SUBB A, R3
+    54  012F: B4 00 DF      CJNE A,#0, LOOP
+    55  0132: E9            MOV A, R1
+    56  0133: C3            CLR C
+    57  0134: 9C            SUBB A, R4
+    58  0135: B4 00 D9      CJNE A,#0, LOOP
+    59  0138: ED            MOV A, R5
+    60  0139: C3            CLR C
+    61  013A: 9D            SUBB A, R5
+    62  013B: B4 00 D3      CJNE A,#0, LOOP
+    63  013E: B2 97         CPL LED
+    64  0140:           LOOP2:
+    65  0140: 80 FE         SJMP LOOP2
+    66  0142: 00            NOP
+    67  0143:           SPRWADZ_SEC:
+    68  0143: EA            MOV A, R2
+    69  0144: C3            CLR C
+    70  0145: 94 3B         SUBB A, #59
+    71  0147: 40 03         JC WYJDZ
+    72  0149: 7A 00         MOV R2, #0
+    73  014B: 09            INC R1
+    74  014C:           WYJDZ:
+    75  014C: 22            RET
+    76                  
+    77  014D:           SPRWADZ_MIN:
+    78  014D: E9            MOV A, R1
+    79  014E: C3            CLR C
+    80  014F: 94 3C         SUBB A, #60
+    81  0151: 40 03         JC WYJDZ2
+    82  0153: 79 00         MOV R1, #0
+    83  0155: 08            INC R0
+    84  0156:           WYJDZ2:
+    85  0156: 22            RET
+    86                  
+    87  0157:           SPRWADZ_GODZ:
+    88  0157: E8            MOV A, R0
+    89  0158: C3            CLR C
+    90  0159: 94 18         SUBB A, #24
+    91  015B: 40 02         JC WYJDZ3
+    92  015D: 78 00         MOV R0, #0
+    93  015F:           WYJDZ3:
+    94  015F: 22            RET
+    95                  
+    96  0160:           USTAW_LCD:
+    97  0160: 12 81 0C      LCALL LCD_CLR
+    98  0163: E8            MOV A,R0
+    99  0164: 12 02 0C      LCALL BCD
+   100  0167: 12 81 04      LCALL WRITE_HEX
+   101  016A: 74 3A         MOV A,#':'
+   102  016C: 12 81 02      LCALL WRITE_DATA
+   103  016F: E9            MOV A,R1
+   104  0170: 12 02 0C      LCALL BCD
+   105  0173: 12 81 04      LCALL WRITE_HEX
+   106  0176: 74 3A         MOV A,#':'
+   107  0178: 12 81 02      LCALL WRITE_DATA
+   108  017B: EA            MOV A,R2
+   109  017C: 12 02 0C      LCALL BCD
+   110  017F: 12 81 04      LCALL WRITE_HEX
+   111  0182: 22            RET
+   112  0183:           WPROWADZ_CZAS:
+   113  0183: 12 81 0C      LCALL LCD_CLR 
+   114  0186: 12 01 FF      LCALL WPROWADZ
+   115  0189: F8            MOV R0, A
+   116  018A: C3            CLR C
+   117  018B: 94 19         SUBB A, #25
+   118  018D: 50 F4         JNC WPROWADZ_CZAS
+   119  018F: E8            MOV A, R0
+   120  0190: 12 02 0C      LCALL BCD
+   121  0193: 12 81 04      LCALL WRITE_HEX
+   122  0196: 74 3A         MOV A,#':'
+   123  0198: 12 81 02      LCALL WRITE_DATA
+   124  019B:           WPROWADZ_MINUTY:
+   125  019B: 12 01 FF      LCALL WPROWADZ
+   126  019E: F9            MOV R1, A
+   127  019F: C3            CLR C
+   128  01A0: 94 3D         SUBB A, #61
+   129  01A2: 50 F7         JNC WPROWADZ_MINUTY
+   130  01A4: E9            MOV A, R1
+   131  01A5: 12 02 0C      LCALL BCD
+   132  01A8: 12 81 04      LCALL WRITE_HEX
+   133  01AB: 74 3A         MOV A,#':'
+   134  01AD: 12 81 02      LCALL WRITE_DATA
+   135  01B0:           WPROWADZ_SEC:
+   136  01B0: 12 01 FF      LCALL WPROWADZ
+   137  01B3: FA            MOV R2, A
+   138  01B4: C3            CLR C
+   139  01B5: 94 3D         SUBB A, #61
+   140  01B7: 50 F7         JNC WPROWADZ_SEC
+   141  01B9: EA            MOV A, R2
+   142  01BA: 12 02 0C      LCALL BCD
+   143  01BD: 12 81 04      LCALL WRITE_HEX
+   144  01C0: 22            RET
+   145                  
+   146  01C1:           WPROWADZ_CZAS2:
+   147  01C1: 12 81 0C      LCALL LCD_CLR 
+   148  01C4: 12 01 FF      LCALL WPROWADZ
+   149  01C7: FB            MOV R3, A
+   150  01C8: C3            CLR C
+   151  01C9: 94 19         SUBB A, #25
+   152  01CB: 50 F4         JNC WPROWADZ_CZAS2
+   153  01CD: EB            MOV A, R3
+   154  01CE: 12 02 0C      LCALL BCD
+   155  01D1: 12 81 04      LCALL WRITE_HEX
+   156  01D4: 74 3A         MOV A,#':'
+   157  01D6: 12 81 02      LCALL WRITE_DATA
+   158  01D9:           WPROWADZ_MINUTY2:
+   159  01D9: 12 01 FF      LCALL WPROWADZ
+   160  01DC: FC            MOV R4, A
+   161  01DD: C3            CLR C
+   162  01DE: 94 3D         SUBB A, #61
+   163  01E0: 50 F7         JNC WPROWADZ_MINUTY2
+   164  01E2: EC            MOV A, R4
+   165  01E3: 12 02 0C      LCALL BCD
+   166  01E6: 12 81 04      LCALL WRITE_HEX
+   167  01E9: 74 3A         MOV A,#':'
+   168  01EB: 12 81 02      LCALL WRITE_DATA
+   169  01EE:           WPROWADZ_SEC2:
+   170  01EE: 12 01 FF      LCALL WPROWADZ
+   171  01F1: FD            MOV R5, A
+   172  01F2: C3            CLR C
+   173  01F3: 94 3D         SUBB A, #61
+   174  01F5: 50 F7         JNC WPROWADZ_SEC2
+   175  01F7: ED            MOV A, R5
+   176  01F8: 12 02 0C      LCALL BCD
+   177  01FB: 12 81 04      LCALL WRITE_HEX
+   178  01FE: 22            RET
+   179                  
+   180  01FF:           WPROWADZ:
+   181  01FF: 12 81 1C      LCALL WAIT_KEY ; Wczytaj liczbę dziesiątek
+   182  0202: 75 F0 0A      MOV B,#10 ; pomnóż
+   183  0205: A4            MUL AB ; przez 10
+   184  0206: FD            MOV R5,A ; zapisz liczbę w R1
+   185  0207: 12 81 1C      LCALL WAIT_KEY ;wczytaj liczbę jedności
+   186  020A: 2D            ADD A,R5 ; dodaj liczbę jedności do R1
+   187  020B: 22            RET ; wyjdź z podprogramu. Wynik w A.
+   188  020C:           BCD:
+   189  020C: 75 F0 0A      MOV B,#10
+   190  020F: 84            DIV AB
+   191  0210: C4            SWAP A
+   192  0211: 25 F0         ADD A,B
+   193  0213: 22            RET
+   194  0214:           CHUJ_DO_EMULACJI:
+   195  0214: 75 F0 0A      MOV B,#10
+   196  0217: 84            DIV AB
+   197  0218: C4            SWAP A
+   198  0219: 25 F0         ADD A,B
+   199  021B: 22            RET
+   200                  
